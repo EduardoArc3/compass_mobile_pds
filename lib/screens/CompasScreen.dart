@@ -1,4 +1,8 @@
+import 'dart:math' as math;
+//Used to convert degrees to radians (because Transform.rotate uses radians)
+
 import 'package:flutter/material.dart';
+import 'package:flutter_compass/flutter_compass.dart'; //Plugin that gives access to the device compass sensor
 import 'package:permission_handler/permission_handler.dart'; //This Package allow consult and ask for permisson in the phone
 
 class CompassScreen extends StatefulWidget {
@@ -27,7 +31,7 @@ class _CompassScreenState extends State<CompassScreen> {
           _hasPermissions =
               (value ==
               PermissionStatus
-                  .granted); //If permission is granted, variable is true
+                  .granted); //If permission is granted, variable is true //otherwise, variable is false
         });
       }
     });
@@ -36,8 +40,44 @@ class _CompassScreenState extends State<CompassScreen> {
   //Widget Compass
 
   Widget _buildCompass() {
-    return Center(
-      child: Container(child: Image.asset('assets/images/compass.png')),
+    //StreamBuilder listens to real-time compass sensor changes
+    return StreamBuilder<CompassEvent>(
+      stream: FlutterCompass.events,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Text('Error al obtener la orientación: ${snapshot.error}');
+        }
+
+        //loading
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        //Get heading in degrees (0 - 360)
+        double? direction = snapshot.data!.heading;
+
+        //if direction is null, then devices does not support this sensor
+        if (direction == null) {
+          return const Center(child: Text('El dispositivo no tiene sensor'));
+        }
+
+        return Center(
+          child: Container(
+            padding: const EdgeInsets.all(25),
+            //Rotates the compass image based on direction
+            //Convert degrees to radians
+            //Multiply by -1 to rotate in correct directio
+            child: Transform.rotate(
+              angle: direction * (math.pi / 180) * -1,
+
+              child: Image.asset(
+                'assets/images/compass.png',
+                color: Colors.black,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -49,6 +89,7 @@ class _CompassScreenState extends State<CompassScreen> {
       home: Scaffold(
         body: Builder(
           builder: (context) {
+            //If permission granted, show compass
             if (_hasPermissions) {
               //if is true
               return _buildCompass(); //return
