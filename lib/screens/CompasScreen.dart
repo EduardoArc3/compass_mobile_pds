@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 //Used to convert degrees to radians (because Transform.rotate uses radians)
 
+import 'package:compass_mobile_pds/screens/InitialSplash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart'; //Plugin that gives access to the device compass sensor
 import 'package:permission_handler/permission_handler.dart'; //This Package allow consult and ask for permisson in the phone
@@ -87,6 +88,17 @@ class _CompassScreenState extends State<CompassScreen> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => Initialsplash()),
+              );
+            },
+          ),
+        ),
         body: Builder(
           builder: (context) {
             //If permission granted, show compass
