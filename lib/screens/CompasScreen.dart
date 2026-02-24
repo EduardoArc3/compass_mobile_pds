@@ -194,7 +194,7 @@ class _CompassScreenState extends State<CompassScreen> {
         return Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset("assets/images/north.png", fit: BoxFit.cover),
+            _buildAnimatedBackground(direction),
 
             Container(color: Colors.black.withValues(alpha: 0.4)),
 
@@ -277,5 +277,36 @@ class _CompassScreenState extends State<CompassScreen> {
         },
       ),
     );
+  }
+
+  Widget _buildAnimatedBackground(double direction) {
+    direction = (direction + 360) % 360;
+    String imagePath = _getImageForDirection(direction);
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 1000),
+      transitionBuilder: (child, animation) {
+        return FadeTransition(opacity: animation, child: child);
+      },
+      child: Image.asset(
+        imagePath,
+        key: ValueKey<String>(imagePath),
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      ),
+    );
+  }
+
+  String _getImageForDirection(double degrees) {
+    if (degrees >= 315 || degrees < 45) {
+      return "assets/images/north.png";
+    } else if (degrees >= 45 && degrees < 135) {
+      return "assets/images/east.png";
+    } else if (degrees >= 135 && degrees < 225) {
+      return "assets/images/south.jpg";
+    } else {
+      return "assets/images/west.png";
+    }
   }
 }
