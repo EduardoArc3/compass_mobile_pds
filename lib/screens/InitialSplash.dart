@@ -3,8 +3,15 @@ import 'dart:ui';
 import 'package:compass_mobile_pds/screens/CompasScreen.dart';
 import 'package:flutter/material.dart';
 
-class Initialsplash extends StatelessWidget {
+class Initialsplash extends StatefulWidget {
   const Initialsplash({super.key});
+
+  @override
+  State<Initialsplash> createState() => _InitialsplashState();
+}
+
+class _InitialsplashState extends State<Initialsplash> {
+  bool _isPressed = false;
 
   static const Color _bluePrimary = Color(0xFF003DA5);
   static const Color _blueMid = Color(0xFF002A75);
@@ -21,71 +28,88 @@ class Initialsplash extends StatelessWidget {
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [_bluePrimary, _blueMid, _blueDark],
           ),
         ),
         child: Stack(
           children: [
-            // Elementos decorativos de fondo
+            // Design elements
             _buildBackgroundDecorations(),
-            // Contenido principal
+            //Main content
             SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 20),
-                    // Icono de brújula decorativo superior
-                    _buildCompassIcon(),
-                    const SizedBox(height: 24),
-                    // Logo UNISON
-                    _buildUnisonLogo(),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Brújula - App',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: const Duration(milliseconds: 1300),
+                        curve: Curves.easeOut,
+                        builder: (context, value, child) {
+                          return Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 30 * (1 - value)),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 20),
+                            _buildCompassIcon(),
+                            const SizedBox(height: 24),
+                            _buildUnisonLogo(),
+                            const SizedBox(height: 24),
+                            const Text(
+                              'Brújula - App',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 34,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Universidad de Sonora',
+                              style: TextStyle(
+                                color: _yellowAccent,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                            _buildFeatureCard(
+                              icon: Icons.explore,
+                              title: 'Orientación en tiempo real',
+                              subtitle: 'Usando una rosa de los vientos',
+                            ),
+                            const SizedBox(height: 12),
+                            _buildFeatureCard(
+                              icon: Icons.location_on,
+                              title: 'Coordenadas',
+                              subtitle: 'Latitud, longitud y altitud exactas',
+                            ),
+                            const SizedBox(height: 37),
+                            _buildStartButton(context),
+                            const SizedBox(height: 40),
+                            _buildTeamSection(),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    // Subtítulo
-                    Text(
-                      'Universidad de Sonora',
-                      style: TextStyle(
-                        color: _yellowAccent,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    // Características
-                    _buildFeatureCard(
-                      icon: Icons.explore,
-                      title: 'Orientación en tiempo real',
-                      subtitle: 'Usando una rosa de los vientos',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildFeatureCard(
-                      icon: Icons.location_on,
-                      title: 'Coordenadas',
-                      subtitle: 'Latitud, longitud y altitud exactas',
-                    ),
-                    const SizedBox(height: 32),
-                    // Botón para iniciar la brujula
-                    _buildStartButton(context),
-                    const SizedBox(height: 32),
-                    // equipo de desarrollo
-                    _buildTeamSection(),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
           ],
@@ -98,24 +122,38 @@ class Initialsplash extends StatelessWidget {
     return Positioned.fill(
       child: Stack(
         children: [
-          // Rosa de los vientos decorativa del fondo
+          //more design background
           Center(
             child: Opacity(
               opacity: 0.05,
               child: SizedBox(
                 width: 320,
                 height: 320,
-                child: CustomPaint(
-                  painter: _CompassRosePainter(),
-                ),
+                child: CustomPaint(painter: _CompassRosePainter()),
               ),
             ),
           ),
-          // puntos del fondo 
-          Positioned(top: 80, left: 40, child: _buildFloatingDot(8, _yellowAccent, 0.4)),
-          Positioned(top: 160, right: 64, child: _buildFloatingDot(12, Colors.white, 0.3)),
-          Positioned(bottom: 200, left: 48, child: _buildFloatingDot(8, _yellowAccent, 0.4)),
-          Positioned(bottom: 280, right: 40, child: _buildFloatingDot(8, Colors.white, 0.3)),
+          //points of the background
+          Positioned(
+            top: 80,
+            left: 40,
+            child: _buildFloatingDot(8, _yellowAccent, 0.4),
+          ),
+          Positioned(
+            top: 160,
+            right: 64,
+            child: _buildFloatingDot(12, Colors.white, 0.3),
+          ),
+          Positioned(
+            bottom: 200,
+            left: 48,
+            child: _buildFloatingDot(8, _yellowAccent, 0.4),
+          ),
+          Positioned(
+            bottom: 280,
+            right: 40,
+            child: _buildFloatingDot(8, Colors.white, 0.3),
+          ),
         ],
       ),
     );
@@ -126,7 +164,7 @@ class Initialsplash extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: color.withOpacity(opacity),
+        color: color.withAlpha((opacity * 255).toInt()),
         shape: BoxShape.circle,
       ),
     );
@@ -141,9 +179,12 @@ class Initialsplash extends StatelessWidget {
           width: 64,
           height: 64,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 2,
+            ),
           ),
           child: const Icon(Icons.explore, size: 36, color: _yellowAccent),
         ),
@@ -156,18 +197,16 @@ class Initialsplash extends StatelessWidget {
       width: 160,
       height: 160,
       decoration: BoxDecoration(
+        shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.3),
             blurRadius: 24,
-            spreadRadius: 4,
+            offset: Offset(0, 15),
           ),
         ],
       ),
-      child: Image.asset(
-        'assets/images/Logouson.png',
-        fit: BoxFit.contain,
-      ),
+      child: Image.asset('assets/images/Logouson.png', fit: BoxFit.cover),
     );
   }
 
@@ -183,9 +222,9 @@ class Initialsplash extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
           ),
           child: Row(
             children: [
@@ -213,7 +252,7 @@ class Initialsplash extends StatelessWidget {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                         fontSize: 10,
                       ),
                     ),
@@ -228,18 +267,10 @@ class Initialsplash extends StatelessWidget {
   }
 
   Widget _buildStartButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const CompassScreen(),
-          ),
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(999),
+      child: Ink(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [_yellowAccent, _yellowLight],
@@ -249,25 +280,47 @@ class Initialsplash extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
           boxShadow: [
             BoxShadow(
-              color: _yellowAccent.withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: _yellowAccent.withValues(alpha: _isPressed ? 0.2 : 0.4),
+              blurRadius: _isPressed ? 10 : 25,
+              offset: Offset(0, _isPressed ? 4 : 10),
             ),
           ],
-          border: Border.all(color: _yellowLight.withOpacity(0.5), width: 2),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(999),
+          onHighlightChanged: (value) {
+            setState(() {
+              _isPressed = value;
+            });
+          },
+          onTap: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const CompassScreen()),
+            );
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOut,
+            transform: Matrix4.identity()
+              ..scaleByDouble(
+                _isPressed ? 0.95 : 1.0, // x
+                _isPressed ? 0.95 : 1.0, // y
+                1.0, // z
+                1.0,
+              ),
+            padding: const EdgeInsets.symmetric(vertical: 18),
+            alignment: Alignment.center,
+            child: const Text(
               'Iniciar',
               style: TextStyle(
                 color: _white,
                 fontSize: 18,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -277,9 +330,9 @@ class Initialsplash extends StatelessWidget {
     return Column(
       children: [
         Text(
-          'Equipo',
+          'Equipo de desarrollo:',
           style: TextStyle(
-            color: Colors.white.withOpacity(0.5),
+            color: Colors.white.withValues(alpha: 0.5),
             fontSize: 12,
           ),
         ),
@@ -320,7 +373,7 @@ class Initialsplash extends StatelessWidget {
   }
 }
 
-// lineas del fondo para la rosa
+// Build background compass rose
 class _CompassRosePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -339,11 +392,7 @@ class _CompassRosePainter extends CustomPainter {
       final radius = size.width / 2;
       final dx = radius * math.cos(angle);
       final dy = radius * math.sin(angle);
-      canvas.drawLine(
-        center - Offset(dx, dy),
-        center + Offset(dx, dy),
-        paint,
-      );
+      canvas.drawLine(center - Offset(dx, dy), center + Offset(dx, dy), paint);
     }
   }
 
