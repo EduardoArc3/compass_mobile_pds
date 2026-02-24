@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui';
 //Used to convert degrees to radians (because Transform.rotate uses radians)
 
 import 'package:compass_mobile_pds/screens/InitialSplash.dart';
@@ -15,6 +16,134 @@ class CompassScreen extends StatefulWidget {
 
 class _CompassScreenState extends State<CompassScreen> {
   bool _hasPermissions = false; //begin in false
+
+  Widget _buildCompassRing() {
+    double size = 280;
+    double pointSize = 50;
+    double radius = size / 2;
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Anillo
+          Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.blueAccent, width: 3),
+            ),
+          ),
+
+          // N
+          Positioned(
+            top: -pointSize / 2,
+            left: radius - pointSize / 2,
+            child: _buildPoint("N", Colors.blue, pointSize),
+          ),
+
+          // S
+          Positioned(
+            bottom: -pointSize / 2,
+            left: radius - pointSize / 2,
+            child: _buildPoint("S", Colors.green, pointSize),
+          ),
+
+          // E
+          Positioned(
+            right: -pointSize / 2,
+            top: radius - pointSize / 2,
+            child: _buildPoint("E", Colors.yellow, pointSize),
+          ),
+
+          // O
+          Positioned(
+            left: -pointSize / 2,
+            top: radius - pointSize / 2,
+            child: _buildPoint("O", Colors.orange, pointSize),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPoint(String text, Color color, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 12),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPointsNSEO(String text, Alignment alignment, Color color) {
+    return Align(
+      alignment: alignment,
+
+      child: Transform.translate(
+        offset: const Offset(0, 0),
+
+        child: Container(
+          width: 50,
+          height: 50,
+          margin: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 15),
+            ],
+          ),
+
+          alignment: Alignment.center,
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCenterGlobe() {
+    return Container(
+      width: 75,
+      height: 75,
+      decoration: BoxDecoration(
+        color: Colors.orange,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withValues(alpha: 0.5),
+            blurRadius: 25,
+          ),
+        ],
+      ),
+
+      child: const Icon(Icons.navigation, color: Colors.white, size: 32),
+    );
+  }
 
   @override
   void initState() {
@@ -62,21 +191,29 @@ class _CompassScreenState extends State<CompassScreen> {
           return const Center(child: Text('El dispositivo no tiene sensor'));
         }
 
-        return Center(
-          child: Container(
-            padding: const EdgeInsets.all(25),
-            //Rotates the compass image based on direction
-            //Convert degrees to radians
-            //Multiply by -1 to rotate in correct directio
-            child: Transform.rotate(
-              angle: direction * (math.pi / 180) * -1,
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset("assets/images/north.png", fit: BoxFit.cover),
 
-              child: Image.asset(
-                'assets/images/compass.png',
-                color: Colors.black,
+            Container(color: Colors.black.withValues(alpha: 0.4)),
+
+            Center(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  //Rotates the compass image based on direction
+                  //Convert degrees to radians
+                  //Multiply by -1 to rotate in correct directio
+                  Transform.rotate(
+                    angle: direction * (math.pi / 180) * -1,
+                    child: _buildCompassRing(),
+                  ),
+                  _buildCenterGlobe(),
+                ],
               ),
             ),
-          ),
+          ],
         );
       },
     );
@@ -84,32 +221,45 @@ class _CompassScreenState extends State<CompassScreen> {
 
   @override
   Widget build(BuildContext context) {
-    //Build visual interface
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => Initialsplash()),
-              );
-            },
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      backgroundColor: const Color.fromARGB(255, 249, 247, 247),
+      body: Stack(
+        children: [
+          _hasPermissions ? _buildCompass() : _buildPermission(),
+
+          Positioned(
+            top: 50,
+            left: 20,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(50),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.1),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const Initialsplash(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-        body: Builder(
-          builder: (context) {
-            //If permission granted, show compass
-            if (_hasPermissions) {
-              //if is true
-              return _buildCompass(); //return
-            } else {
-              return _buildPermission();
-            }
-          },
-        ),
+        ],
       ),
     );
   }
