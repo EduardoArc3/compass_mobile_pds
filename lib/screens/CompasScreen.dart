@@ -6,6 +6,7 @@ import 'package:compass_mobile_pds/screens/InitialSplash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart'; //Plugin that gives access to the device compass sensor
 import 'package:permission_handler/permission_handler.dart'; //This Package allow consult and ask for permisson in the phone
+import 'package:geolocator/geolocator.dart';
 
 class CompassScreen extends StatefulWidget {
   const CompassScreen({super.key});
@@ -16,6 +17,23 @@ class CompassScreen extends StatefulWidget {
 
 class _CompassScreenState extends State<CompassScreen> {
   bool _hasPermissions = false; //begin in false
+  String _latitudeText = "--";
+  String _longitudeText = "__";
+  String _altitudeText = "__";
+
+  Future<void> _getLocation() async {
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    if (mounted) {
+      setState(() {
+        _latitudeText = position.latitude.toStringAsFixed(5);
+        _longitudeText = position.longitude.toStringAsFixed(5);
+        _altitudeText = "${position.altitude.toStringAsFixed(2)} m";
+      });
+    }
+  }
 
   Widget _buildCompassRing() {
     double size = 280;
@@ -147,8 +165,10 @@ class _CompassScreenState extends State<CompassScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _requestPermission();
+    });
   }
 
   void _fetchPermissionStatus() {
@@ -213,6 +233,19 @@ class _CompassScreenState extends State<CompassScreen> {
                 ],
               ),
             ),
+            Positioned(
+              bottom: 60,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildGlassCard(title: "Latitud", value: _latitudeText),
+                  _buildGlassCard(title: "Longitud", value: _longitudeText),
+                  _buildGlassCard(title: "Altitud", value: _altitudeText),
+                ],
+              ),
+            ),
           ],
         );
       },
@@ -223,11 +256,24 @@ class _CompassScreenState extends State<CompassScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      backgroundColor: const Color.fromARGB(255, 249, 247, 247),
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          _hasPermissions ? _buildCompass() : _buildPermission(),
-
+          _hasPermissions
+              ? _buildCompass()
+              : Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _requestPermission,
+                        child: const Text("Reintentar"),
+                      ),
+                    ],
+                  ),
+                ),
           Positioned(
             top: 50,
             left: 20,
@@ -265,16 +311,74 @@ class _CompassScreenState extends State<CompassScreen> {
   }
 
   //Permission
+  Future<void> _requestPermission() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return;
+    }
+    LocationPermission permission = await Geolocator.checkPermission();
 
-  Widget _buildPermission() {
-    return Center(
-      child: ElevatedButton(
-        child: Text('Request Permission'),
-        onPressed: () {
-          Permission.locationWhenInUse.request().then((value) {
-            _fetchPermissionStatus();
-          });
-        },
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      if (mounted) {
+        setState(() {
+          _hasPermissions = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _hasPermissions = true;
+      });
+    }
+    await _getLocation();
+  }
+
+  Widget _buildGlassCard({required String title, required String value}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          width: 110,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.2)),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.location_pin, color: Colors.white),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
