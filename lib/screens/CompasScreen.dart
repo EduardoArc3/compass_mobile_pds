@@ -170,6 +170,9 @@ class _CompassScreenState extends State<CompassScreen> {
         if (direction == null) {
           return const Center(child: Text('El dispositivo no tiene sensor'));
         }
+        final rData = _getRegionAndData(direction);
+        final rText = rData["text"];
+        final rColor = rData["color"];
         Color ringColor = _getRingColor(direction);
 
         return Stack(
@@ -194,6 +197,44 @@ class _CompassScreenState extends State<CompassScreen> {
                 ],
               ),
             ),
+
+            //TOP RIGHT BADGE
+            Positioned(
+              top: 60,
+              right: 20,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 500),
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: ScaleTransition(scale: animation, child: child),
+                  );
+                },
+                child: Container(
+                  key: ValueKey(rText),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: rColor,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(color: rColor.withOpacity(0.4), blurRadius: 15),
+                    ],
+                  ),
+                  child: Text(
+                    rText,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
             Positioned(
               bottom: 60,
               left: 0,
@@ -399,6 +440,23 @@ class _CompassScreenState extends State<CompassScreen> {
       return const Color.fromARGB(255, 89, 225, 170);
     } else {
       return Colors.orange;
+    }
+  }
+
+  Map<String, dynamic> _getRegionAndData(double degrees) {
+    degrees = (degrees + 360) % 360;
+
+    if (degrees >= 315 || degrees < 45) {
+      return {"text": "Norte - Aurora Boreal", "color": Colors.blue};
+    } else if (degrees >= 45 && degrees < 135) {
+      return {"text": "Este - Playa", "color": Colors.yellow};
+    } else if (degrees >= 135 && degrees < 225) {
+      return {
+        "text": "Sur - Selva",
+        "color": const Color.fromARGB(255, 89, 225, 170),
+      };
+    } else {
+      return {"text": "Oeste - Viejo Oeste", "color": Colors.orange};
     }
   }
 
