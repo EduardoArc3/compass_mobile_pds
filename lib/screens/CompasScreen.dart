@@ -41,7 +41,7 @@ class _CompassScreenState extends State<CompassScreen> {
         });
   }
 
-  Widget _buildCompassRing() {
+  Widget _buildCompassRing(Color ringColor) {
     double size = 280;
     double pointSize = 50;
     double radius = size / 2;
@@ -53,12 +53,11 @@ class _CompassScreenState extends State<CompassScreen> {
         clipBehavior: Clip.none,
         children: [
           // Anillo
-          Container(
-            width: size,
-            height: size,
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 500),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.blueAccent, width: 3),
+              border: Border.all(color: ringColor, width: 3),
             ),
           ),
 
@@ -171,6 +170,7 @@ class _CompassScreenState extends State<CompassScreen> {
         if (direction == null) {
           return const Center(child: Text('El dispositivo no tiene sensor'));
         }
+        Color ringColor = _getRingColor(direction);
 
         return Stack(
           fit: StackFit.expand,
@@ -188,7 +188,7 @@ class _CompassScreenState extends State<CompassScreen> {
                   //Multiply by -1 to rotate in correct directio
                   Transform.rotate(
                     angle: direction * (math.pi / 180) * -1,
-                    child: _buildCompassRing(),
+                    child: _buildCompassRing(ringColor),
                   ),
                   _buildCenterGlobe(),
                 ],
@@ -385,6 +385,20 @@ class _CompassScreenState extends State<CompassScreen> {
       return "assets/images/south.jpg";
     } else {
       return "assets/images/west.png";
+    }
+  }
+
+  Color _getRingColor(double degrees) {
+    degrees = (degrees + 360) % 360;
+
+    if (degrees >= 315 || degrees < 45) {
+      return Colors.blue;
+    } else if (degrees >= 45 && degrees < 135) {
+      return Colors.yellow;
+    } else if (degrees >= 135 && degrees < 225) {
+      return const Color.fromARGB(255, 89, 225, 170);
+    } else {
+      return Colors.orange;
     }
   }
 
