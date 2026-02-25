@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
 //Used to convert degrees to radians (because Transform.rotate uses radians)
@@ -5,7 +6,7 @@ import 'dart:ui';
 import 'package:compass_mobile_pds/screens/InitialSplash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart'; //Plugin that gives access to the device compass sensor
-import 'package:permission_handler/permission_handler.dart'; //This Package allow consult and ask for permisson in the phone
+//import 'package:permission_handler/permission_handler.dart'; //This Package allow consult and ask for permisson in the phone
 import 'package:geolocator/geolocator.dart';
 
 class CompassScreen extends StatefulWidget {
@@ -20,19 +21,24 @@ class _CompassScreenState extends State<CompassScreen> {
   String _latitudeText = "--";
   String _longitudeText = "__";
   String _altitudeText = "__";
+  StreamSubscription<Position>? _positionReal;
 
-  Future<void> _getLocation() async {
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    if (mounted) {
-      setState(() {
-        _latitudeText = position.latitude.toStringAsFixed(5);
-        _longitudeText = position.longitude.toStringAsFixed(5);
-        _altitudeText = "${position.altitude.toStringAsFixed(2)} m";
-      });
-    }
+  void _LocationUpdates() {
+    _positionReal =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 1,
+          ),
+        ).listen((Position position) {
+          if (mounted) {
+            setState(() {
+              _latitudeText = position.latitude.toStringAsFixed(5);
+              _longitudeText = position.longitude.toStringAsFixed(5);
+              _altitudeText = "${position.altitude.toStringAsFixed(2)} m";
+            });
+          }
+        });
   }
 
   Widget _buildCompassRing() {
@@ -67,7 +73,11 @@ class _CompassScreenState extends State<CompassScreen> {
           Positioned(
             bottom: -pointSize / 2,
             left: radius - pointSize / 2,
-            child: _buildPoint("S", Colors.green, pointSize),
+            child: _buildPoint(
+              "S",
+              const Color.fromARGB(255, 89, 225, 170),
+              pointSize,
+            ),
           ),
 
           // E
@@ -111,39 +121,6 @@ class _CompassScreenState extends State<CompassScreen> {
     );
   }
 
-  Widget _buildPointsNSEO(String text, Alignment alignment, Color color) {
-    return Align(
-      alignment: alignment,
-
-      child: Transform.translate(
-        offset: const Offset(0, 0),
-
-        child: Container(
-          width: 50,
-          height: 50,
-          margin: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 15),
-            ],
-          ),
-
-          alignment: Alignment.center,
-          child: Text(
-            text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildCenterGlobe() {
     return Container(
       width: 75,
@@ -168,22 +145,6 @@ class _CompassScreenState extends State<CompassScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _requestPermission();
-    });
-  }
-
-  void _fetchPermissionStatus() {
-    Permission.locationWhenInUse.status.then((value) {
-      //Check the current status of the location permit.
-      if (mounted) {
-        //if widget still active in the screen
-        setState(() {
-          //something changed
-          _hasPermissions =
-              (value ==
-              PermissionStatus
-                  .granted); //If permission is granted, variable is true //otherwise, variable is false
-        });
-      }
     });
   }
 
@@ -284,9 +245,9 @@ class _CompassScreenState extends State<CompassScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
+                      color: Colors.white.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
@@ -337,7 +298,7 @@ class _CompassScreenState extends State<CompassScreen> {
         _hasPermissions = true;
       });
     }
-    await _getLocation();
+    _LocationUpdates();
   }
 
   Widget _buildGlassCard({required String title, required String value}) {
@@ -349,9 +310,9 @@ class _CompassScreenState extends State<CompassScreen> {
           width: 110,
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
+            color: Colors.white.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
           ),
           child: Column(
             children: [
@@ -361,19 +322,32 @@ class _CompassScreenState extends State<CompassScreen> {
                   Text(
                     title,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 12,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
-              Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                transitionBuilder: (child, animation) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.5),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
+                child: Text(
+                  value,
+                  key: ValueKey(value),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -412,5 +386,11 @@ class _CompassScreenState extends State<CompassScreen> {
     } else {
       return "assets/images/west.png";
     }
+  }
+
+  @override
+  void dispose() {
+    _positionReal?.cancel();
+    super.dispose();
   }
 }
