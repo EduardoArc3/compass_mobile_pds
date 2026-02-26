@@ -31,20 +31,32 @@ class _CompassScreenState extends State<CompassScreen> {
             distanceFilter: 1,
           ),
         ).listen((Position position) {
+          double lat = position.latitude;
+          double lon = position.longitude;
+
           if (mounted) {
             setState(() {
-              _latitudeText = position.latitude.toStringAsFixed(5);
-              _longitudeText = position.longitude.toStringAsFixed(5);
+              _latitudeText =
+                  "${lat.abs().toStringAsFixed(5)}° ${lat >= 0 ? "N" : "S"}";
+
+              _longitudeText =
+                  "${lon.abs().toStringAsFixed(5)}° ${lon >= 0 ? "E" : "W"}";
               _altitudeText = "${position.altitude.toStringAsFixed(2)} m";
             });
           }
         });
   }
 
-  Widget _buildCompassRing(Color ringColor) {
+  Widget _buildCompassRing(Color ringColor, double direction) {
     double size = 280;
     double pointSize = 50;
     double radius = size / 2;
+    direction = (direction + 360) % 360;
+
+    bool isNorth = direction >= 315 || direction < 45;
+    bool isEast = direction >= 45 && direction < 135;
+    bool isSouth = direction >= 135 && direction < 225;
+    bool isWest = direction >= 225 && direction < 315;
 
     return SizedBox(
       width: size,
@@ -65,7 +77,7 @@ class _CompassScreenState extends State<CompassScreen> {
           Positioned(
             top: -pointSize / 2,
             left: radius - pointSize / 2,
-            child: _buildPoint("N", Colors.blue, pointSize),
+            child: _buildPoint("N", Colors.blue, pointSize, isNorth),
           ),
 
           // S
@@ -76,6 +88,7 @@ class _CompassScreenState extends State<CompassScreen> {
               "S",
               const Color.fromARGB(255, 89, 225, 170),
               pointSize,
+              isSouth,
             ),
           ),
 
@@ -83,30 +96,36 @@ class _CompassScreenState extends State<CompassScreen> {
           Positioned(
             right: -pointSize / 2,
             top: radius - pointSize / 2,
-            child: _buildPoint("E", Colors.yellow, pointSize),
+            child: _buildPoint("E", Colors.yellow, pointSize, isEast),
           ),
 
           // O
           Positioned(
             left: -pointSize / 2,
             top: radius - pointSize / 2,
-            child: _buildPoint("O", Colors.orange, pointSize),
+            child: _buildPoint("O", Colors.orange, pointSize, isWest),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPoint(String text, Color color, double size) {
+  Widget _buildPoint(String text, Color color, double size, bool isActive) {
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 12),
-        ],
+        boxShadow: isActive
+            ? [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.9),
+                  blurRadius: 25,
+                  spreadRadius: 3,
+                ),
+              ]
+            : [],
       ),
       alignment: Alignment.center,
       child: Text(
@@ -182,6 +201,29 @@ class _CompassScreenState extends State<CompassScreen> {
 
             Container(color: Colors.black.withValues(alpha: 0.4)),
 
+            //DEGREE INDICATOR
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 70,
+              left: 0,
+              right: 0,
+              child: Column(
+                children: [
+                  Text(
+                    "${direction.toStringAsFixed(0)}°",
+                    style: const TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    _getCardinal(direction),
+                    style: const TextStyle(fontSize: 18, color: Colors.white70),
+                  ),
+                ],
+              ),
+            ),
+
             Center(
               child: Stack(
                 alignment: Alignment.center,
@@ -191,7 +233,7 @@ class _CompassScreenState extends State<CompassScreen> {
                   //Multiply by -1 to rotate in correct directio
                   Transform.rotate(
                     angle: direction * (math.pi / 180) * -1,
-                    child: _buildCompassRing(ringColor),
+                    child: _buildCompassRing(ringColor, direction),
                   ),
                   _buildCenterGlobe(),
                 ],
@@ -227,7 +269,7 @@ class _CompassScreenState extends State<CompassScreen> {
                     rText,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
                   ),
@@ -348,7 +390,7 @@ class _CompassScreenState extends State<CompassScreen> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
-          width: 110,
+          width: 119,
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.08),
@@ -464,5 +506,18 @@ class _CompassScreenState extends State<CompassScreen> {
   void dispose() {
     _positionReal?.cancel();
     super.dispose();
+  }
+
+  String _getCardinal(double degrees) {
+    degrees = (degrees + 360) % 360;
+
+    if (degrees >= 337.5 || degrees < 22.5) return "Norte";
+    if (degrees >= 22.5 && degrees < 67.5) return "Noreste";
+    if (degrees >= 67.5 && degrees < 112.5) return "Este";
+    if (degrees >= 112.5 && degrees < 157.5) return "Sureste";
+    if (degrees >= 157.5 && degrees < 202.5) return "Sur";
+    if (degrees >= 202.5 && degrees < 247.5) return "Suroeste";
+    if (degrees >= 247.5 && degrees < 292.5) return "Oeste";
+    return "Noroeste";
   }
 }
