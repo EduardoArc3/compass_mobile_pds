@@ -1,17 +1,37 @@
 # compass_mobile_pds
 
-A new Flutter project.
+Aplicación desarrollada en Flutter que implementa una brujula digital interactiva con detección de orientaión en tiempo real y vizualización de datos geográficos.
 
-## Getting Started
+Desarrollada para la materia de Practicas de Desarrollo de Sistemas III (Programacion Movil)
 
-This project is a starting point for a Flutter application.
+#Caracteriticas
 
-A few resources to get you started if this is your first Flutter project:
+- Detección de orientación en tiempo real (0° - 360°)
+- Visualización de latitud, longitud y altitud
+- Cambio dinámico de fondo según la región cardinal
+- Iluminación del punto cardinal activo
+  
+Tecnologias: 
+- Flutter Flutter 3.41.0 • channel stable • https://github.com/flutter/flutter.git
+- Dart 3.11.0
+- DevTools 2.54.1
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Paquetes utilizados:
+- flutter_compass
+- geolocator
+- permission_handler
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Nuestra presentacion:
+
+https://www.canva.com/design/DAHCZYmUaO4/xRGHy3a1YRrynD0duPY21w/edit?utm_content=DAHCZYmUaO4&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
+
+Imagenes:
+
+ <p align="center">
+  <img src="assets/images/a1.jpeg" width="220"/>
+  <img src="assets/images/a2.jpeg" width="220"/>
+  <img src="assets/images/a3.jpeg" width="220"/>
+  <img src="assets/images/a4.jpeg" width="220"/>
+   <img src="assets/images/a5.jpeg" width="220"/>
+</p>
+
