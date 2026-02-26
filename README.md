@@ -1,6 +1,6 @@
 # compass_mobile_pds
 
-Aplicación desarrollada en Flutter que implementa una brujula digital interactiva con detección de orientación en tiempo real y vizualización de datos geográficos.
+Aplicación desarrollada en Flutter que implementa una brujula digital interactiva con detección de orientación en tiempo real y visualización de datos geográficos.
 
 Desarrollada para la materia de Practicas de Desarrollo de Sistemas III (Programacion Movil)
 
